@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CardGrading</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f1;color:#222;min-height:100vh}
+.nav{background:#1a1a2e;border-bottom:2px solid #f5c518;padding:0 20px;display:flex;align-items:center;gap:12px;height:56px;position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo img{height:38px;width:38px;object-fit:contain;border-radius:6px}
+.nav-logo-fallback{width:38px;height:38px;background:#f5c518;border-radius:6px;display:none;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#1a1a2e}
+.nav-title{color:#f5c518;font-size:20px;font-weight:600;letter-spacing:0.5px}
+.nav-tabs{display:flex;gap:4px;margin-left:auto}
+.nav-tab{background:transparent;border:1px solid transparent;color:#ccc;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:14px;transition:all 0.15s}
+.nav-tab:hover{color:#f5c518;border-color:#f5c518}
+.nav-tab.active{background:#f5c518;color:#1a1a2e;font-weight:600;border-color:#f5c518}
+.page{display:none;padding:28px 20px;min-height:calc(100vh - 56px)}
+.page.active{display:block}
+.card{background:#fff;border-radius:12px;border:1px solid #e0ddd5;padding:22px 24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.section-title{font-size:17px;font-weight:600;color:#1a1a2e;margin-bottom:18px}
+.search-wrap{max-width:580px;margin:0 auto}
+.search-row{display:flex;gap:10px;margin-bottom:22px}
+.search-row input{flex:1;padding:10px 14px;border:1.5px solid #e0ddd5;border-radius:8px;font-size:15px;outline:none;font-family:inherit}
+.search-row input:focus{border-color:#f5c518;box-shadow:0 0 0 3px rgba(245,197,24,0.15)}
+.btn{padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;transition:all 0.15s}
+.btn-primary{background:#f5c518;color:#1a1a2e}
+.btn-primary:hover{background:#e6b800}
+.btn-danger{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.btn-danger:hover{background:#fecaca}
+.btn-outline{background:#fff;border:1px solid #e0ddd5;color:#444}
+.btn-outline:hover{border-color:#f5c518;color:#1a1a2e}
+.btn-sm{padding:5px 11px;font-size:12px}
+.result-card{background:#fff;border-radius:10px;border:1px solid #e0ddd5;padding:16px 20px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,0.04)}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.card-name{font-size:15px;font-weight:600;color:#1a1a2e}
+.card-code{font-size:12px;color:#888;font-family:monospace;background:#f3f2ef;padding:2px 8px;border-radius:4px;margin-top:4px;display:inline-block}
+.status-badge{display:inline-block;font-size:11px;padding:4px 11px;border-radius:20px;font-weight:600;background:#f3f2ef;color:#555;white-space:nowrap}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;font-size:13px}
+.info-label{color:#999}
+.info-value{color:#222;font-weight:500}
+.psa-none{color:#bbb;font-style:italic}
+.empty-state{text-align:center;padding:40px;color:#bbb;font-size:14px}
+.loading-state{text-align:center;padding:40px;color:#f5c518;font-size:14px}
+.login-wrap{max-width:340px;margin:50px auto;background:#fff;border-radius:12px;border:1px solid #e0ddd5;padding:30px;box-shadow:0 2px 8px rgba(0,0,0,0.07)}
+.login-wrap h2{font-size:17px;font-weight:600;margin-bottom:6px;color:#1a1a2e}
+.login-wrap p{font-size:13px;color:#999;margin-bottom:20px}
+.login-wrap input{width:100%;padding:10px 14px;border:1.5px solid #e0ddd5;border-radius:8px;font-size:15px;outline:none;margin-bottom:12px;font-family:inherit}
+.login-wrap input:focus{border-color:#f5c518;box-shadow:0 0 0 3px rgba(245,197,24,0.15)}
+.err-msg{color:#dc2626;font-size:13px;margin-bottom:10px}
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.toolbar .spacer{flex:1}
+.hint{font-size:12px;color:#bbb;margin-bottom:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed;font-family:inherit}
+th{background:#1a1a2e;color:#f5c518;padding:10px;text-align:left;font-weight:600;font-size:12px}
+th:first-child{border-radius:8px 0 0 0}
+th:last-child{border-radius:0 8px 0 0}
+td{padding:8px;border-bottom:1px solid #f0ede8;vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:#fffde8}
+td[contenteditable="true"]{cursor:text}
+td[contenteditable="true"]:focus{outline:2px solid #f5c518;outline-offset:-2px;background:#fffde8;white-space:normal;overflow:visible}
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid #e0ddd5}
+.col-act{width:58px}
+.col-status{width:90px}
+.col-psa{width:96px}
+.col-date{width:100px}
+.col-plan{width:82px}
+.col-phone{width:92px}
+.upload-label{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid #e0ddd5;background:#fff;cursor:pointer;font-size:13px;color:#444;font-family:inherit}
+.upload-label:hover{border-color:#f5c518;color:#1a1a2e}
+.toast{position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:#f5c518;padding:10px 18px;border-radius:8px;font-size:13px;display:none;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,0.2)}
+.row-count{font-size:12px;color:#bbb;margin-top:8px;text-align:right}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:6px}
+.sync-dot.syncing{background:#f5c518;animation:pulse 1s infinite}
+.sync-dot.error{background:#ef4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-logo">
+    <img id="logo-img" src="CardGrading.jpeg" alt="CardGrading" onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex'"/>
+    <div class="nav-logo-fallback" id="logo-fb">CG</div>
+    <span class="nav-title">CardGrading</span>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('customer')">客戶查詢</button>
+    <button class="nav-tab" onclick="switchTab('admin')">管理後台</button>
+  </div>
+</div>
+
+<!-- Customer Page -->
+<div id="page-customer" class="page active">
+  <div class="search-wrap">
+    <div class="card">
+      <div class="section-title">查詢卡片狀態</div>
+      <div class="search-row">
+        <input type="text" id="phone-input" placeholder="請輸入 8 位電話號碼" maxlength="8"
+          oninput="this.value=this.value.replace(/\D/g,'')"
+          onkeydown="if(event.key==='Enter')searchCards()"/>
+        <button class="btn btn-primary" onclick="searchCards()">查詢</button>
+      </div>
+      <div id="customer-results"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Page -->
+<div id="page-admin" class="page">
+  <div id="admin-login-view">
+    <div class="login-wrap">
+      <h2>管理員登入</h2>
+      <p>請輸入管理員密碼以繼續</p>
+      <input type="password" id="admin-pw" placeholder="密碼" onkeydown="if(event.key==='Enter')adminLogin()"/>
+      <div id="admin-err" class="err-msg" style="display:none">密碼錯誤，請重試</div>
+      <button class="btn btn-primary" style="width:100%" onclick="adminLogin()">登入</button>
+    </div>
+  </div>
+
+  <div id="admin-panel-view" style="display:none">
+    <div class="card">
+      <div class="toolbar">
+        <span class="section-title" style="margin:0">所有卡片</span>
+        <span style="font-size:12px;color:#999;display:flex;align-items:center">
+          <span class="sync-dot" id="sync-dot"></span>
+          <span id="sync-label">已連線 Firebase</span>
+        </span>
+        <div class="spacer"></div>
+        <label class="upload-label" for="xlsx-upload">
+          <i class="ti ti-upload"></i> 匯入 Excel
+        </label>
+        <input type="file" id="xlsx-upload" accept=".xlsx,.xls" style="display:none" onchange="importXLSX(this)"/>
+        <button class="btn btn-primary btn-sm" onclick="addRow()">
+          <i class="ti ti-plus"></i> 新增行
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">
+          <i class="ti ti-download"></i> 匯出 CSV
+        </button>
+      </div>
+      <div class="hint">Excel 欄位順序：姓名 | 電話 | Card Code | 方案 | 狀態 | 預計日期 | PSA 編號　｜　點擊格子可直接編輯，Tab / Enter 可移動格子</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>姓名</th>
+              <th class="col-phone">電話</th>
+              <th>Card Code</th>
+              <th class="col-plan">方案</th>
+              <th class="col-status">狀態</th>
+              <th class="col-date">預計日期</th>
+              <th class="col-psa">PSA 編號</th>
+              <th class="col-act">刪除</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody">
+            <tr><td colspan="8" class="loading-state"><i class="ti ti-loader"></i> 載入資料中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="row-count" id="row-count"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCseM5gSNBSeqrA8289iYrZbzEPiwD7NO8",
+  authDomain: "cardgrading-7517e.firebaseapp.com",
+  projectId: "cardgrading-7517e",
+  storageBucket: "cardgrading-7517e.firebasestorage.app",
+  messagingSenderId: "776892862161",
+  appId: "1:776892862161:web:5321266d289953d695fff0",
+  measurementId: "G-40KVS0GPRN"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COL = "cards";
+
+// ── State ──
+let cards = []; // [{id, name, phone, code, plan, status, date, psa}]
+const ADMIN_PW = "000411";
+
+// ── UI helpers ──
+function x(s){return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function toast(m){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(t._t);t._t=setTimeout(()=>t.style.display="none",2000);}
+function setSyncDot(state){
+  const dot=document.getElementById("sync-dot");
+  const lbl=document.getElementById("sync-label");
+  if(!dot)return;
+  dot.className="sync-dot"+(state==="syncing"?" syncing":state==="error"?" error":"");
+  lbl.textContent=state==="syncing"?"儲存中...":state==="error"?"連線錯誤":"已連線 Firebase";
+}
+
+// ── Tab switch ──
+window.switchTab = function(t){
+  document.querySelectorAll(".nav-tab").forEach((b,i)=>b.classList.toggle("active",["customer","admin"][i]===t));
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page-"+t).classList.add("active");
+};
+
+// ── Customer search ──
+window.searchCards = function(){
+  const ph=document.getElementById("phone-input").value.trim();
+  const res=document.getElementById("customer-results");
+  if(ph.length!==8){res.innerHTML='<div class="empty-state">請輸入有效的 8 位電話號碼</div>';return;}
+  const found=cards.filter(c=>c.phone===ph);
+  if(!found.length){res.innerHTML='<div class="empty-state">找不到此電話號碼的卡片記錄</div>';return;}
+  res.innerHTML=found.map(c=>`
+    <div class="result-card">
+      <div class="card-header">
+        <div>
+          <div class="card-name">${x(c.name)}</div>
+          <span class="card-code">${x(c.code)}</span>
+        </div>
+        <span class="status-badge">${x(c.status)}</span>
+      </div>
+      <div class="info-grid">
+        <span class="info-label">電話</span><span class="info-value">${x(c.phone)}</span>
+        <span class="info-label">方案</span><span class="info-value">${x(c.plan)}</span>
+        <span class="info-label">預計完成日期</span><span class="info-value">${x(c.date)||"—"}</span>
+        <span class="info-label">PSA 編號</span><span class="${c.psa?'info-value':'psa-none'}">${c.psa?x(c.psa):"尚未分配"}</span>
+      </div>
+    </div>`).join("");
+};
+
+// ── Admin login ──
+window.adminLogin = function(){
+  if(document.getElementById("admin-pw").value===ADMIN_PW){
+    document.getElementById("admin-login-view").style.display="none";
+    document.getElementById("admin-panel-view").style.display="block";
+    startLiveSync();
+  } else {
+    document.getElementById("admin-err").style.display="block";
+  }
+};
+
+// ── Live sync from Firestore ──
+function startLiveSync(){
+  onSnapshot(collection(db, COL), (snapshot) => {
+    cards = snapshot.docs.map(d=>({id:d.id, ...d.data()}));
+    cards.sort((a,b)=>((a.code||"")>(b.code||"")?1:-1));
+    renderTable();
+  }, (err) => {
+    setSyncDot("error");
+    toast("Firebase 連線錯誤："+err.message);
+  });
+}
+
+// Also keep customer page cards in sync
+onSnapshot(collection(db, COL), (snapshot) => {
+  cards = snapshot.docs.map(d=>({id:d.id, ...d.data()}));
+});
+
+// ── Render table ──
+function renderTable(){
+  document.getElementById("admin-tbody").innerHTML = cards.map((c,i)=>`
+    <tr data-id="${x(c.id)}">
+      <td contenteditable="true" onblur="ec('${c.id}','name',this)">${x(c.name)}</td>
+      <td contenteditable="true" class="col-phone" onblur="ec('${c.id}','phone',this)">${x(c.phone)}</td>
+      <td contenteditable="true" onblur="ec('${c.id}','code',this)">${x(c.code)}</td>
+      <td contenteditable="true" class="col-plan" onblur="ec('${c.id}','plan',this)">${x(c.plan)}</td>
+      <td contenteditable="true" class="col-status" onblur="ec('${c.id}','status',this)">${x(c.status)}</td>
+      <td contenteditable="true" class="col-date" onblur="ec('${c.id}','date',this)">${x(c.date)}</td>
+      <td contenteditable="true" class="col-psa" onblur="ec('${c.id}','psa',this)">${x(c.psa)}</td>
+      <td class="col-act"><button class="btn btn-danger btn-sm" onclick="delRow('${c.id}')"><i class="ti ti-trash"></i></button></td>
+    </tr>`).join("");
+  document.getElementById("row-count").textContent=`共 ${cards.length} 筆記錄`;
+  bindKeys();
+}
+
+// ── Edit cell ──
+window.ec = async function(id, field, el){
+  const val = el.innerText.trim();
+  setSyncDot("syncing");
+  try {
+    await updateDoc(doc(db, COL, id), {[field]: val});
+    setSyncDot("ok");
+    toast("已儲存");
+  } catch(e) {
+    setSyncDot("error");
+    toast("儲存失敗："+e.message);
+  }
+};
+
+// ── Delete row ──
+window.delRow = async function(id){
+  if(!confirm("確定刪除此記錄？"))return;
+  setSyncDot("syncing");
+  try {
+    await deleteDoc(doc(db, COL, id));
+    setSyncDot("ok");
+    toast("已刪除");
+  } catch(e) {
+    setSyncDot("error");
+    toast("刪除失敗："+e.message);
+  }
+};
+
+// ── Add row ──
+window.addRow = async function(){
+  const newCard = {name:"新客戶",phone:"",code:"CG-"+(cards.length+1).toString().padStart(3,"0"),plan:"Standard",status:"待收件",date:"",psa:""};
+  setSyncDot("syncing");
+  try {
+    await addDoc(collection(db, COL), newCard);
+    setSyncDot("ok");
+    toast("已新增");
+    setTimeout(()=>{
+      const rows=document.querySelectorAll("#admin-tbody tr");
+      const last=rows[rows.length-1];
+      if(last)last.querySelector("td[contenteditable]").focus();
+    },500);
+  } catch(e) {
+    setSyncDot("error");
+    toast("新增失敗："+e.message);
+  }
+};
+
+// ── Import Excel ──
+window.importXLSX = async function(input){
+  const file=input.files[0];
+  if(!file)return;
+  const XLSX=window.XLSX;
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      setSyncDot("syncing");
+      const batch=writeBatch(db);
+      let n=0;
+      rows.forEach((r,i)=>{
+        if(i===0||(!r[0]&&!r[1]))return;
+        const ref=doc(collection(db,COL));
+        batch.set(ref,{
+          name:String(r[0]||""),phone:String(r[1]||""),
+          code:String(r[2]||""),plan:String(r[3]||"Standard"),
+          status:String(r[4]||"待收件"),
+          date:String(r[5]||""),psa:String(r[6]||"")
+        });
+        n++;
+      });
+      await batch.commit();
+      setSyncDot("ok");
+      toast(`已匯入 ${n} 筆資料`);
+    }catch(err){
+      setSyncDot("error");
+      toast("匯入失敗："+err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  input.value="";
+};
+
+// ── Export CSV ──
+window.exportCSV = function(){
+  const hdr=["姓名","電話","Card Code","方案","狀態","預計日期","PSA 編號"];
+  const rows=cards.map(c=>[c.name,c.phone,c.code,c.plan,c.status,c.date,c.psa].map(v=>`"${(v||"").replace(/"/g,'""')}"`).join(","));
+  const bom="\uFEFF";
+  const blob=new Blob([bom+[hdr.join(","),...rows].join("\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="cardgrading.csv";a.click();
+};
+
+// ── Key nav ──
+function bindKeys(){
+  const cells=()=>Array.from(document.querySelectorAll("#admin-tbody td[contenteditable]"));
+  document.querySelectorAll("#admin-tbody td[contenteditable]").forEach(td=>{
+    td.addEventListener("keydown",e=>{
+      if(e.key==="Tab"||e.key==="Enter"){
+        e.preventDefault();
+        const all=cells(),idx=all.indexOf(e.target);
+        const next=all[idx+(e.shiftKey&&e.key==="Tab"?-1:1)];
+        if(next)next.focus();
+      }
+    });
+  });
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
